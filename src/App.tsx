@@ -6,11 +6,12 @@ function App() {
     {
       group: "A",
       x: 0,
+      color: "255,0,0",
       stats: {
         min: 1.2,
-        Q1: 2.1,
+        q1: 2.1,
         median: 3.0,
-        Q3: 3.8,
+        q3: 3.8,
         max: 5.1,
       },
       density: [
@@ -34,11 +35,12 @@ function App() {
     {
       group: "B",
       x: 1,
+      color: "0,255,0",
       stats: {
         min: 0.8,
-        Q1: 1.7,
+        q1: 1.7,
         median: 2.4,
-        Q3: 3.2,
+        q3: 3.2,
         max: 4.6,
       },
       density: [
@@ -61,11 +63,12 @@ function App() {
     {
       group: "C",
       x: 2,
+      color: "0,0,255",
       stats: {
         min: 2.0,
-        Q1: 3.0,
+        q1: 3.0,
         median: 4.1,
-        Q3: 5.0,
+        q3: 5.0,
         max: 6.2,
       },
       density: [
@@ -89,12 +92,13 @@ function App() {
     {
       group: "D",
       x: 3,
+      color: "255,155,233",
       stats: {
-        min: -0.45,
-        Q1: 1.2534327507019043,
+        min: 0.024,
+        q1: 1.2534327507019043,
         median: 2.504441261291504,
-        Q3: 3.760298252105713,
-        max: 5.15,
+        q3: 3.760298252105713,
+        max: 4.96,
       },
       density: [
         [0.002424434758722782, 0.1522938108479556],
@@ -202,6 +206,7 @@ function App() {
   ];
 
   const violinWidth = 0.75;
+  const boxWidth = 5;
 
   const polygonData = violinData.map((item) => {
     const rightSide = item.density.map(([y, d]) => [
@@ -215,12 +220,14 @@ function App() {
       .map(([y, d]) => [item.x - d * violinWidth, y]);
 
     return {
+      x: item.x,
       group: item.group,
       value: [item.x, item.stats.min, item.stats.max],
       points: [...rightSide, ...leftSide],
       left: leftSide,
       right: rightSide,
       stats: item.stats,
+      color: `rgb(${item.color})`,
     };
   });
 
@@ -243,8 +250,8 @@ function App() {
         min: -4.5,
         max: 10,
       },
-
       legend: {},
+      tooltip: {},
       series: [
         {
           name: "Violinplot",
@@ -252,6 +259,13 @@ function App() {
           data: polygonData,
           renderItem(params: any, api: any) {
             const item = polygonData[params.dataIndex];
+
+            const centerX = api.coord([item.x, item.stats.min])[0];
+            const minPoint = api.coord([item.x, item.stats.min]);
+            const q1Point = api.coord([item.x, item.stats.q1]);
+            const medianPoint = api.coord([item.x, item.stats.median]);
+            const q3Point = api.coord([item.x, item.stats.q3]);
+            const maxPoint = api.coord([item.x, item.stats.max]);
 
             console.log("renderItem data:", item);
             // return {
@@ -261,13 +275,14 @@ function App() {
             //   },
             //   style: {
             //     fill: "none",
-            //     stroke: "red",
+            //     stroke: item.color,
             //     lineWidth: 1,
             //   },
             // };
             return {
               type: "group",
               children: [
+                //outline
                 {
                   type: "polyline",
                   shape: {
@@ -276,7 +291,7 @@ function App() {
                   },
                   style: {
                     fill: "none",
-                    stroke: "red",
+                    stroke: item.color,
                     lineWidth: 1,
                   },
                 },
@@ -288,7 +303,7 @@ function App() {
                   },
                   style: {
                     fill: "none",
-                    stroke: "red",
+                    stroke: item.color,
                     lineWidth: 1,
                   },
                 },
@@ -302,7 +317,7 @@ function App() {
                   },
                   style: {
                     fill: "none",
-                    stroke: "red",
+                    stroke: item.color,
                     lineWidth: 1,
                   },
                 },
@@ -316,10 +331,11 @@ function App() {
                   },
                   style: {
                     fill: "none",
-                    stroke: "red",
+                    stroke: item.color,
                     lineWidth: 1,
                   },
                 },
+                //fill
                 {
                   type: "polyline",
                   shape: {
@@ -327,7 +343,48 @@ function App() {
                     smooth: 0.5,
                   },
                   style: {
-                    fill: "rgba(255, 0, 0, 0.45)",
+                    fill: item.color,
+                    opacity: 0.45,
+                  },
+                },
+                //whisker line
+                {
+                  type: "polyline",
+                  shape: {
+                    points: [minPoint, maxPoint],
+                  },
+                  style: {
+                    stroke: "black",
+                    lineWidth: 1,
+                  },
+                },
+                //box
+                {
+                  type: "rect",
+                  shape: {
+                    x: centerX - boxWidth / 2,
+                    y: q3Point[1],
+                    width: boxWidth,
+                    height: q1Point[1] - q3Point[1],
+                  },
+                  style: {
+                    stroke: "black",
+                    lineWidth: 1,
+                    fill: "white",
+                  },
+                },
+                //median
+                {
+                  type: "line",
+                  shape: {
+                    x1: centerX - boxWidth / 2,
+                    y1: medianPoint[1],
+                    x2: centerX + boxWidth / 2,
+                    y2: medianPoint[1],
+                  },
+                  style: {
+                    stroke: "black",
+                    lineWidth: 1.5,
                   },
                 },
               ],
